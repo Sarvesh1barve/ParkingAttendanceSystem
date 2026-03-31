@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parking Manager</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+    font-family: Arial;
+    background: #0B1E3A;
+    color: white;
+    margin: 0;
+}
+
+header {
+    padding: 15px;
+    text-align: center;
+    font-size: 22px;
+    background: #071A2B;
+}
+
+.container {
+    padding: 15px;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: none;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.in-btn { background: #00C853; }
+.out-btn { background: #D32F2F; }
+
+.list-item {
+    background: rgba(255,255,255,0.08);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>🚗 Parking Manager</header>
+
+<div class="container">
+
+<!-- SEARCH -->
+<div class="card">
+    <input type="text" id="search" placeholder="Enter Vehicle Number">
+    <button onclick="handleSearch()">Search</button>
+</div>
+
+<!-- REGISTER FORM -->
+<div class="card" id="formCard" style="display:none;">
+    <h3>Register Vehicle</h3>
+    <input id="empId" placeholder="Employee ID">
+    <input id="name" placeholder="Name">
+    <input id="phone" placeholder="Phone">
+    <select id="type">
+        <option value="Car">Car</option>
+        <option value="Bike">Bike</option>
+    </select>
+    <button onclick="registerVehicle()">Save</button>
+</div>
+
+<!-- ACTION -->
+<div class="card" id="actionCard" style="display:none;">
+    <h3 id="vehicleInfo"></h3>
+    <button class="in-btn" onclick="markIn()">IN</button>
+    <button class="out-btn" onclick="markOut()">OUT</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card">
+    <h3>Dashboard (Today)</h3>
+    <p id="stats"></p>
+</div>
+
+<!-- ACTIVE LIST -->
+<div class="card">
+    <h3>Currently Parked</h3>
+    <div id="activeList"></div>
+</div>
+
+<!-- EXPORT -->
+<div class="card">
+    <h3>Export</h3>
+    <button onclick="exportData('day')">Day</button>
+    <button onclick="exportData('month')">Month</button>
+    <button onclick="exportData('year')">Year</button>
+</div>
+
+</div>
+
+<script>
+let vehicles = JSON.parse(localStorage.getItem("vehicles") || "{}");
+let logs = JSON.parse(localStorage.getItem("logs") || "[]");
+let currentVehicle = null;
+
+function saveData() {
+    localStorage.setItem("vehicles", JSON.stringify(vehicles));
+    localStorage.setItem("logs", JSON.stringify(logs));
+}
+
+function handleSearch() {
+    let number = document.getElementById("search").value.toUpperCase();
+    currentVehicle = number;
+
+    if (!vehicles[number]) {
+        document.getElementById("formCard").style.display = "block";
+        document.getElementById("actionCard").style.display = "none";
+    } else {
+        document.getElementById("formCard").style.display = "none";
+        document.getElementById("actionCard").style.display = "block";
+        document.getElementById("vehicleInfo").innerText =
+            vehicles[number].name + " (" + vehicles[number].type + ")";
+    }
+}
+
+function registerVehicle() {
+    vehicles[currentVehicle] = {
+        empId: empId.value,
+        name: name.value,
+        phone: phone.value,
+        type: type.value
+    };
+    saveData();
+    alert("Saved!");
+    handleSearch();
+}
+
+function markIn() {
+    logs.push({
+        number: currentVehicle,
+        in: new Date().toISOString(),
+        out: null
+    });
+    saveData();
+    updateDashboard();
+}
+
+function markOut() {
+    for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].number === currentVehicle && !logs[i].out) {
+            logs[i].out = new Date().toISOString();
+            break;
+        }
+    }
+    saveData();
+    updateDashboard();
+}
+
+function updateDashboard() {
+    let today = new Date().toDateString();
+
+    let active = logs.filter(l =>
+        new Date(l.in).toDateString() === today && !l.out
+    );
+
+    document.getElementById("stats").innerText =
+        "Active Vehicles: " + active.length;
+
+    let html = "";
+    active.forEach(l => {
+        html += `<div class="list-item">
+            ${l.number} - ${vehicles[l.number].name}
+            <button onclick="quickOut('${l.number}')">OUT</button>
+        </div>`;
+    });
+
+    document.getElementById("activeList").innerHTML = html;
+}
+
+function quickOut(number) {
+    currentVehicle = number;
+    markOut();
+}
+
+function exportData(type) {
+    let now = new Date();
+
+    let filtered = logs.filter(l => {
+        let d = new Date(l.in);
+        if (type === "day") return d.toDateString() === now.toDateString();
+        if (type === "month") return d.getMonth() === now.getMonth();
+        if (type === "year") return d.getFullYear() === now.getFullYear();
+    });
+
+    let csv = "Number,Name,Type,In,Out\n";
+
+    filtered.forEach(l => {
+        let v = vehicles[l.number];
+        csv += `${l.number},${v.name},${v.type},${l.in},${l.out}\n`;
+    });
+
+    let blob = new Blob([csv], { type: "text/csv" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "parking.csv";
+    a.click();
+}
+
+updateDashboard();
+
+// PWA
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+</body>
+</html>
