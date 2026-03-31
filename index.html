@@ -1,235 +1,1046 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parking Manager</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#0b1f3a" />
+  <title>Parking Manager</title>
+  <link rel="manifest" href="manifest.json" />
 
-<link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #081626;
+      --bg-2: #0b1f3a;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-2: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #ffffff;
+      --muted: #b8c6d6;
+      --accent: #f4b400;
+      --success: #18c37e;
+      --danger: #e64b4b;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      --radius: 20px;
+    }
 
-<style>
-body {
-    font-family: Arial;
-    background: #0B1E3A;
-    color: white;
-    margin: 0;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-header {
-    padding: 15px;
-    text-align: center;
-    font-size: 22px;
-    background: #071A2B;
-}
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at top right, rgba(244, 180, 0, 0.08), transparent 22%),
+        linear-gradient(180deg, #071321 0%, #0b1f3a 100%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height: 100%;
+    }
 
-.container {
-    padding: 15px;
-}
+    body {
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    }
 
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
+    .app-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 14px 32px;
+    }
 
-input, select {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 5px;
-    border: none;
-}
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
 
-button {
-    padding: 10px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
 
-.in-btn { background: #00C853; }
-.out-btn { background: #D32F2F; }
+    .brand-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #f4b400, #ffcf4d);
+      color: #1e1e1e;
+      font-size: 24px;
+      font-weight: 700;
+      box-shadow: 0 8px 18px rgba(244, 180, 0, 0.25);
+      flex-shrink: 0;
+    }
 
-.list-item {
-    background: rgba(255,255,255,0.08);
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 5px;
-}
-</style>
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .date-pill {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .left-col,
+    .right-col {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-inner {
+      padding: 18px;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .section-subtitle {
+      margin: -4px 0 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 14px 14px;
+      border-radius: 14px;
+      outline: none;
+      font-size: 1rem;
+      transition: 0.2s ease;
+    }
+
+    input::placeholder {
+      color: #9bb0c8;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(244,180,0,0.7);
+      box-shadow: 0 0 0 3px rgba(244,180,0,0.14);
+    }
+
+    select option {
+      color: #111;
+    }
+
+    .btn {
+      border: 0;
+      outline: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f4b400, #ffcf4d);
+      color: #1f1f1f;
+      box-shadow: 0 10px 18px rgba(244, 180, 0, 0.22);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #15b976, #1fd58a);
+      color: #062014;
+      box-shadow: 0 10px 18px rgba(24, 195, 126, 0.22);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #df4747, #ff6a6a);
+      color: #2b0707;
+      box-shadow: 0 10px 18px rgba(230, 75, 75, 0.22);
+    }
+
+    .btn-sm {
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      border-radius: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .record-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card-2);
+      padding: 16px;
+    }
+
+    .vehicle-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .vehicle-number {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin: 0 0 6px;
+    }
+
+    .vehicle-meta {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.96rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: var(--card-2);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: clamp(1.25rem, 3vw, 1.8rem);
+      font-weight: 800;
+    }
+
+    .list-wrap {
+      display: grid;
+      gap: 12px;
+      max-height: 520px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .list-item {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .list-left {
+      min-width: 0;
+    }
+
+    .list-title {
+      font-size: 1rem;
+      font-weight: 800;
+      margin: 0 0 6px;
+      word-break: break-word;
+    }
+
+    .list-meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      border: 1px dashed rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 0.93rem;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.info {
+      background: rgba(244,180,0,0.12);
+      border: 1px solid rgba(244,180,0,0.22);
+      color: #ffe08a;
+    }
+
+    .message.error {
+      background: rgba(230,75,75,0.12);
+      border: 1px solid rgba(230,75,75,0.22);
+      color: #ffb3b3;
+    }
+
+    .message.success {
+      background: rgba(24,195,126,0.12);
+      border: 1px solid rgba(24,195,126,0.22);
+      color: #aef1cf;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        padding: 12px 10px 24px;
+      }
+
+      .topbar {
+        padding: 14px;
+        border-radius: 18px;
+      }
+
+      .date-pill {
+        display: none;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .list-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .list-item .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-subtitle {
+        font-size: 0.84rem;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">P</div>
+        <div class="brand-text">
+          <h1 class="brand-title">Parking Manager</h1>
+          <p class="brand-subtitle">Daily vehicle entry and exit tracking</p>
+        </div>
+      </div>
+      <div class="date-pill" id="todayDate"></div>
+    </header>
 
-<header>🚗 Parking Manager</header>
+    <main class="grid">
+      <section class="left-col">
+        <div class="card">
+          <div class="card-inner">
+            <h2 class="section-title">Search Vehicle</h2>
+            <p class="section-subtitle">Search by car or bike number to register, mark IN, or mark OUT.</p>
 
-<div class="container">
+            <div class="search-row">
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Example: MH04LB1235"
+                autocomplete="off"
+              />
+              <button class="btn btn-primary" id="searchBtn">Search</button>
+            </div>
 
-<!-- SEARCH -->
-<div class="card">
-    <input type="text" id="search" placeholder="Enter Vehicle Number">
-    <button onclick="handleSearch()">Search</button>
-</div>
+            <div class="message info" id="searchMessage"></div>
+          </div>
+        </div>
 
-<!-- REGISTER FORM -->
-<div class="card" id="formCard" style="display:none;">
-    <h3>Register Vehicle</h3>
-    <input id="empId" placeholder="Employee ID">
-    <input id="name" placeholder="Name">
-    <input id="phone" placeholder="Phone">
-    <select id="type">
-        <option value="Car">Car</option>
-        <option value="Bike">Bike</option>
-    </select>
-    <button onclick="registerVehicle()">Save</button>
-</div>
+        <div class="card hidden" id="registerCard">
+          <div class="card-inner">
+            <h2 class="section-title">Register New Vehicle</h2>
+            <p class="section-subtitle">This vehicle is not saved yet. Please fill in the owner details.</p>
 
-<!-- ACTION -->
-<div class="card" id="actionCard" style="display:none;">
-    <h3 id="vehicleInfo"></h3>
-    <button class="in-btn" onclick="markIn()">IN</button>
-    <button class="out-btn" onclick="markOut()">OUT</button>
-</div>
+            <div class="form-grid">
+              <input class="full" id="regVehicleNumber" type="text" placeholder="Vehicle Number" readonly />
+              <input id="empId" type="text" placeholder="Employee ID" />
+              <input id="ownerName" type="text" placeholder="Owner Name" />
+              <input id="phoneNumber" type="tel" placeholder="Phone Number" />
+              <select id="vehicleType">
+                <option value="">Select Vehicle Type</option>
+                <option value="Car">Car</option>
+                <option value="Bike">Bike</option>
+              </select>
+            </div>
 
-<!-- DASHBOARD -->
-<div class="card">
-    <h3>Dashboard (Today)</h3>
-    <p id="stats"></p>
-</div>
+            <div class="action-row" style="margin-top:14px;">
+              <button class="btn btn-primary" id="saveVehicleBtn">Save Vehicle</button>
+              <button class="btn btn-secondary" id="cancelRegisterBtn">Cancel</button>
+            </div>
 
-<!-- ACTIVE LIST -->
-<div class="card">
-    <h3>Currently Parked</h3>
-    <div id="activeList"></div>
-</div>
+            <div class="message" id="registerMessage"></div>
+          </div>
+        </div>
 
-<!-- EXPORT -->
-<div class="card">
-    <h3>Export</h3>
-    <button onclick="exportData('day')">Day</button>
-    <button onclick="exportData('month')">Month</button>
-    <button onclick="exportData('year')">Year</button>
-</div>
+        <div class="card hidden" id="actionCard">
+          <div class="card-inner">
+            <h2 class="section-title">Vehicle Action</h2>
 
-</div>
+            <div class="record-box">
+              <div class="vehicle-main">
+                <div>
+                  <p class="vehicle-number" id="actionVehicleNumber">-</p>
+                  <p class="vehicle-meta" id="actionVehicleInfo">-</p>
+                </div>
+                <div class="pill" id="currentStatusPill">Status: Not In</div>
+              </div>
 
-<script>
-let vehicles = JSON.parse(localStorage.getItem("vehicles") || "{}");
-let logs = JSON.parse(localStorage.getItem("logs") || "[]");
-let currentVehicle = null;
+              <div class="action-row">
+                <button class="btn btn-success" id="inBtn">Mark IN</button>
+                <button class="btn btn-danger" id="outBtn">Mark OUT</button>
+              </div>
+            </div>
 
-function saveData() {
-    localStorage.setItem("vehicles", JSON.stringify(vehicles));
-    localStorage.setItem("logs", JSON.stringify(logs));
-}
+            <div class="message" id="actionMessage"></div>
+          </div>
+        </div>
+      </section>
 
-function handleSearch() {
-    let number = document.getElementById("search").value.toUpperCase();
-    currentVehicle = number;
+      <section class="right-col">
+        <div class="card">
+          <div class="card-inner">
+            <h2 class="section-title">Dashboard</h2>
+            <p class="section-subtitle">Live summary for today.</p>
 
-    if (!vehicles[number]) {
-        document.getElementById("formCard").style.display = "block";
-        document.getElementById("actionCard").style.display = "none";
-    } else {
-        document.getElementById("formCard").style.display = "none";
-        document.getElementById("actionCard").style.display = "block";
-        document.getElementById("vehicleInfo").innerText =
-            vehicles[number].name + " (" + vehicles[number].type + ")";
-    }
-}
+            <div class="stats-grid">
+              <div class="stat">
+                <div class="stat-label">Today Date</div>
+                <div class="stat-value" id="statDate">-</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Vehicles In</div>
+                <div class="stat-value" id="statActive">0</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Cars In</div>
+                <div class="stat-value" id="statCars">0</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Bikes In</div>
+                <div class="stat-value" id="statBikes">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-function registerVehicle() {
-    vehicles[currentVehicle] = {
-        empId: empId.value,
-        name: name.value,
-        phone: phone.value,
-        type: type.value
+        <div class="card">
+          <div class="card-inner">
+            <h2 class="section-title">Currently Parked</h2>
+            <p class="section-subtitle">Tap OUT directly from this list when a vehicle leaves.</p>
+            <div id="activeList" class="list-wrap"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-inner">
+            <h2 class="section-title">Export Data</h2>
+            <p class="section-subtitle">Download local records in CSV format.</p>
+
+            <div class="export-grid">
+              <button class="btn btn-secondary" data-export="day">Export Day</button>
+              <button class="btn btn-secondary" data-export="month">Export Month</button>
+              <button class="btn btn-secondary" data-export="year">Export Year</button>
+            </div>
+
+            <div class="message" id="exportMessage"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      vehicles: "parking_vehicles_v2",
+      logs: "parking_logs_v2"
     };
-    saveData();
-    alert("Saved!");
-    handleSearch();
-}
 
-function markIn() {
-    logs.push({
-        number: currentVehicle,
-        in: new Date().toISOString(),
-        out: null
-    });
-    saveData();
-    updateDashboard();
-}
+    let vehicles = loadJSON(STORAGE_KEYS.vehicles, {});
+    let logs = loadJSON(STORAGE_KEYS.logs, []);
+    let currentVehicleNumber = "";
 
-function markOut() {
-    for (let i = logs.length - 1; i >= 0; i--) {
-        if (logs[i].number === currentVehicle && !logs[i].out) {
-            logs[i].out = new Date().toISOString();
-            break;
-        }
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const registerCard = document.getElementById("registerCard");
+    const actionCard = document.getElementById("actionCard");
+
+    const regVehicleNumber = document.getElementById("regVehicleNumber");
+    const empIdInput = document.getElementById("empId");
+    const ownerNameInput = document.getElementById("ownerName");
+    const phoneNumberInput = document.getElementById("phoneNumber");
+    const vehicleTypeInput = document.getElementById("vehicleType");
+
+    const saveVehicleBtn = document.getElementById("saveVehicleBtn");
+    const cancelRegisterBtn = document.getElementById("cancelRegisterBtn");
+
+    const actionVehicleNumber = document.getElementById("actionVehicleNumber");
+    const actionVehicleInfo = document.getElementById("actionVehicleInfo");
+    const currentStatusPill = document.getElementById("currentStatusPill");
+    const inBtn = document.getElementById("inBtn");
+    const outBtn = document.getElementById("outBtn");
+
+    const todayDate = document.getElementById("todayDate");
+    const statDate = document.getElementById("statDate");
+    const statActive = document.getElementById("statActive");
+    const statCars = document.getElementById("statCars");
+    const statBikes = document.getElementById("statBikes");
+    const activeList = document.getElementById("activeList");
+
+    function loadJSON(key, fallback) {
+      try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : fallback;
+      } catch (e) {
+        return fallback;
+      }
     }
-    saveData();
+
+    function saveAll() {
+      localStorage.setItem(STORAGE_KEYS.vehicles, JSON.stringify(vehicles));
+      localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(logs));
+    }
+
+    function normalizeVehicleNumber(value) {
+      return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "");
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatDateTime(dateString) {
+      if (!dateString) return "-";
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(date);
+    }
+
+    function showMessage(elementId, text, type = "info") {
+      const el = document.getElementById(elementId);
+      el.textContent = text;
+      el.className = `message show ${type}`;
+    }
+
+    function clearMessage(elementId) {
+      const el = document.getElementById(elementId);
+      el.textContent = "";
+      el.className = "message";
+    }
+
+    function clearSearchPanels() {
+      registerCard.classList.add("hidden");
+      actionCard.classList.add("hidden");
+      clearMessage("searchMessage");
+      clearMessage("registerMessage");
+      clearMessage("actionMessage");
+    }
+
+    function clearRegisterForm() {
+      regVehicleNumber.value = "";
+      empIdInput.value = "";
+      ownerNameInput.value = "";
+      phoneNumberInput.value = "";
+      vehicleTypeInput.value = "";
+    }
+
+    function isVehicleCurrentlyIn(vehicleNumber) {
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].vehicleNumber === vehicleNumber) {
+          return !logs[i].outTime;
+        }
+      }
+      return false;
+    }
+
+    function getLastOpenEntry(vehicleNumber) {
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].vehicleNumber === vehicleNumber && !logs[i].outTime) {
+          return logs[i];
+        }
+      }
+      return null;
+    }
+
+    function handleSearch() {
+      const number = normalizeVehicleNumber(searchInput.value);
+
+      clearSearchPanels();
+      currentVehicleNumber = "";
+
+      if (!number) {
+        showMessage("searchMessage", "Please enter a vehicle number.", "error");
+        return;
+      }
+
+      currentVehicleNumber = number;
+
+      if (vehicles[number]) {
+        renderActionCard(number);
+        showMessage("searchMessage", "Vehicle found. You can mark IN or OUT.", "success");
+      } else {
+        regVehicleNumber.value = number;
+        registerCard.classList.remove("hidden");
+        showMessage("searchMessage", "Vehicle not found. Please register this vehicle first.", "info");
+      }
+    }
+
+    function validateRegisterForm() {
+      const employeeId = empIdInput.value.trim();
+      const ownerName = ownerNameInput.value.trim();
+      const phoneNumber = phoneNumberInput.value.trim();
+      const vehicleType = vehicleTypeInput.value;
+
+      if (!currentVehicleNumber) {
+        return "Vehicle number is missing.";
+      }
+      if (!employeeId) {
+        return "Employee ID is required.";
+      }
+      if (!ownerName) {
+        return "Owner name is required.";
+      }
+      if (!phoneNumber) {
+        return "Phone number is required.";
+      }
+      if (!/^[0-9+\-\s]{7,15}$/.test(phoneNumber)) {
+        return "Enter a valid phone number.";
+      }
+      if (!vehicleType) {
+        return "Please select vehicle type.";
+      }
+
+      return "";
+    }
+
+    function saveVehicle() {
+      const validationError = validateRegisterForm();
+      if (validationError) {
+        showMessage("registerMessage", validationError, "error");
+        return;
+      }
+
+      vehicles[currentVehicleNumber] = {
+        vehicleNumber: currentVehicleNumber,
+        employeeId: empIdInput.value.trim(),
+        ownerName: ownerNameInput.value.trim(),
+        phoneNumber: phoneNumberInput.value.trim(),
+        vehicleType: vehicleTypeInput.value,
+        createdAt: new Date().toISOString()
+      };
+
+      saveAll();
+      clearMessage("registerMessage");
+      showMessage("registerMessage", "Vehicle saved successfully.", "success");
+
+      renderActionCard(currentVehicleNumber);
+    }
+
+    function renderActionCard(vehicleNumber) {
+      const vehicle = vehicles[vehicleNumber];
+      if (!vehicle) return;
+
+      registerCard.classList.add("hidden");
+      actionCard.classList.remove("hidden");
+
+      actionVehicleNumber.textContent = vehicle.vehicleNumber;
+      actionVehicleInfo.textContent =
+        `${vehicle.ownerName} • ${vehicle.vehicleType} • Emp ID: ${vehicle.employeeId} • ${vehicle.phoneNumber}`;
+
+      const currentlyIn = isVehicleCurrentlyIn(vehicleNumber);
+      currentStatusPill.textContent = currentlyIn ? "Status: In Parking" : "Status: Not In";
+
+      inBtn.disabled = currentlyIn;
+      outBtn.disabled = !currentlyIn;
+      inBtn.style.opacity = currentlyIn ? "0.55" : "1";
+      outBtn.style.opacity = !currentlyIn ? "0.55" : "1";
+    }
+
+    function markIn(vehicleNumber = currentVehicleNumber) {
+      if (!vehicleNumber || !vehicles[vehicleNumber]) {
+        showMessage("actionMessage", "Search and select a valid saved vehicle first.", "error");
+        return;
+      }
+
+      if (isVehicleCurrentlyIn(vehicleNumber)) {
+        renderActionCard(vehicleNumber);
+        showMessage("actionMessage", "This vehicle is already marked IN.", "error");
+        return;
+      }
+
+      logs.push({
+        id: Date.now().toString() + "_" + Math.random().toString(36).slice(2, 8),
+        vehicleNumber,
+        inTime: new Date().toISOString(),
+        outTime: null
+      });
+
+      saveAll();
+      renderActionCard(vehicleNumber);
+      updateDashboard();
+      showMessage("actionMessage", "Vehicle marked IN successfully.", "success");
+    }
+
+    function markOut(vehicleNumber = currentVehicleNumber) {
+      if (!vehicleNumber || !vehicles[vehicleNumber]) {
+        showMessage("actionMessage", "Search and select a valid saved vehicle first.", "error");
+        return;
+      }
+
+      const openEntry = getLastOpenEntry(vehicleNumber);
+      if (!openEntry) {
+        renderActionCard(vehicleNumber);
+        showMessage("actionMessage", "This vehicle is not currently in parking.", "error");
+        return;
+      }
+
+      openEntry.outTime = new Date().toISOString();
+      saveAll();
+      renderActionCard(vehicleNumber);
+      updateDashboard();
+      showMessage("actionMessage", "Vehicle marked OUT successfully.", "success");
+    }
+
+    function getActiveVehiclesToday() {
+      const today = new Date();
+      const todayKey = today.toDateString();
+
+      return logs.filter(log => {
+        const inDate = new Date(log.inTime);
+        return inDate.toDateString() === todayKey && !log.outTime;
+      });
+    }
+
+    function updateDashboard() {
+      const today = new Date();
+      todayDate.textContent = formatDate(today);
+      statDate.textContent = formatDate(today);
+
+      const activeLogs = getActiveVehiclesToday();
+
+      let carCount = 0;
+      let bikeCount = 0;
+
+      activeLogs.forEach(log => {
+        const vehicle = vehicles[log.vehicleNumber];
+        if (vehicle?.vehicleType === "Car") carCount++;
+        if (vehicle?.vehicleType === "Bike") bikeCount++;
+      });
+
+      statActive.textContent = String(activeLogs.length);
+      statCars.textContent = String(carCount);
+      statBikes.textContent = String(bikeCount);
+
+      if (!activeLogs.length) {
+        activeList.innerHTML = `
+          <div class="empty-state">
+            No vehicles are currently marked IN for today.
+          </div>
+        `;
+        return;
+      }
+
+      activeList.innerHTML = activeLogs
+        .slice()
+        .reverse()
+        .map(log => {
+          const vehicle = vehicles[log.vehicleNumber] || {};
+          return `
+            <div class="list-item">
+              <div class="list-left">
+                <p class="list-title">${escapeHtml(log.vehicleNumber)} - ${escapeHtml(vehicle.ownerName || "Unknown")}</p>
+                <p class="list-meta">
+                  ${escapeHtml(vehicle.vehicleType || "-")} • Emp ID: ${escapeHtml(vehicle.employeeId || "-")}<br>
+                  In Time: ${escapeHtml(formatDateTime(log.inTime))}
+                </p>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="quickOut('${escapeJs(log.vehicleNumber)}')">OUT</button>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function exportData(type) {
+      clearMessage("exportMessage");
+
+      const now = new Date();
+
+      const filtered = logs.filter(log => {
+        const d = new Date(log.inTime);
+
+        if (type === "day") {
+          return d.toDateString() === now.toDateString();
+        }
+        if (type === "month") {
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }
+        if (type === "year") {
+          return d.getFullYear() === now.getFullYear();
+        }
+        return false;
+      });
+
+      if (!filtered.length) {
+        showMessage("exportMessage", `No ${type}-wise data available to export.`, "error");
+        return;
+      }
+
+      const rows = [
+        [
+          "Vehicle Number",
+          "Owner Name",
+          "Employee ID",
+          "Phone Number",
+          "Vehicle Type",
+          "In Time",
+          "Out Time"
+        ]
+      ];
+
+      filtered.forEach(log => {
+        const vehicle = vehicles[log.vehicleNumber] || {};
+        rows.push([
+          log.vehicleNumber || "",
+          vehicle.ownerName || "",
+          vehicle.employeeId || "",
+          vehicle.phoneNumber || "",
+          vehicle.vehicleType || "",
+          formatDateTime(log.inTime),
+          formatDateTime(log.outTime)
+        ]);
+      });
+
+      const csv = rows.map(row =>
+        row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")
+      ).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+
+      a.href = url;
+      a.download = `parking_${type}_${stamp}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      showMessage("exportMessage", `${type.toUpperCase()} data exported successfully.`, "success");
+    }
+
+    function quickOut(vehicleNumber) {
+      currentVehicleNumber = vehicleNumber;
+      renderActionCard(vehicleNumber);
+      markOut(vehicleNumber);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function escapeJs(value) {
+      return String(value).replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+    }
+
+    searchBtn.addEventListener("click", handleSearch);
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleSearch();
+    });
+
+    saveVehicleBtn.addEventListener("click", saveVehicle);
+
+    cancelRegisterBtn.addEventListener("click", () => {
+      clearRegisterForm();
+      clearSearchPanels();
+      searchInput.focus();
+    });
+
+    inBtn.addEventListener("click", () => markIn());
+    outBtn.addEventListener("click", () => markOut());
+
+    document.querySelectorAll("[data-export]").forEach(btn => {
+      btn.addEventListener("click", () => exportData(btn.dataset.export));
+    });
+
+    todayDate.textContent = formatDate(new Date());
     updateDashboard();
-}
 
-function updateDashboard() {
-    let today = new Date().toDateString();
-
-    let active = logs.filter(l =>
-        new Date(l.in).toDateString() === today && !l.out
-    );
-
-    document.getElementById("stats").innerText =
-        "Active Vehicles: " + active.length;
-
-    let html = "";
-    active.forEach(l => {
-        html += `<div class="list-item">
-            ${l.number} - ${vehicles[l.number].name}
-            <button onclick="quickOut('${l.number}')">OUT</button>
-        </div>`;
-    });
-
-    document.getElementById("activeList").innerHTML = html;
-}
-
-function quickOut(number) {
-    currentVehicle = number;
-    markOut();
-}
-
-function exportData(type) {
-    let now = new Date();
-
-    let filtered = logs.filter(l => {
-        let d = new Date(l.in);
-        if (type === "day") return d.toDateString() === now.toDateString();
-        if (type === "month") return d.getMonth() === now.getMonth();
-        if (type === "year") return d.getFullYear() === now.getFullYear();
-    });
-
-    let csv = "Number,Name,Type,In,Out\n";
-
-    filtered.forEach(l => {
-        let v = vehicles[l.number];
-        csv += `${l.number},${v.name},${v.type},${l.in},${l.out}\n`;
-    });
-
-    let blob = new Blob([csv], { type: "text/csv" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "parking.csv";
-    a.click();
-}
-
-updateDashboard();
-
-// PWA
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
-}
-</script>
-
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
