@@ -583,20 +583,28 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-inner">
-            <h2 class="section-title">Export Data</h2>
-            <p class="section-subtitle">Download local records in CSV format.</p>
+<div class="card">
+  <div class="card-inner">
+    <h2 class="section-title">Export / Import Data</h2>
+    <p class="section-subtitle">Download parking logs and transfer saved vehicle details between phones.</p>
 
-            <div class="export-grid">
-              <button class="btn btn-secondary" data-export="day">Export Day</button>
-              <button class="btn btn-secondary" data-export="month">Export Month</button>
-              <button class="btn btn-secondary" data-export="year">Export Year</button>
-            </div>
+    <div class="export-grid">
+      <button class="btn btn-secondary" data-export="day">Export Day</button>
+      <button class="btn btn-secondary" data-export="month">Export Month</button>
+      <button class="btn btn-secondary" data-export="year">Export Year</button>
+    </div>
 
-            <div class="message" id="exportMessage"></div>
-          </div>
-        </div>
+    <div style="height:12px;"></div>
+
+    <div class="export-grid">
+      <button class="btn btn-secondary" id="exportVehiclesBtn">Export Vehicles JSON</button>
+      <button class="btn btn-secondary" id="importVehiclesBtn">Import Vehicles JSON</button>
+      <input type="file" id="importVehiclesFile" accept=".json,application/json" style="display:none;">
+    </div>
+
+    <div class="message" id="exportMessage"></div>
+  </div>
+</div>
       </section>
     </main>
   </div>
@@ -637,6 +645,9 @@
     const statCars = document.getElementById("statCars");
     const statBikes = document.getElementById("statBikes");
     const activeList = document.getElementById("activeList");
+    const exportVehiclesBtn = document.getElementById("exportVehiclesBtn");
+    const importVehiclesBtn = document.getElementById("importVehiclesBtn");
+    const importVehiclesFile = document.getElementById("importVehiclesFile");
 
     function loadJSON(key, fallback) {
       try {
@@ -993,6 +1004,128 @@
       showMessage("exportMessage", `${type.toUpperCase()} data exported successfully.`, "success");
     }
 
+    function exportVehiclesJSON() {
+  clearMessage("exportMessage");
+
+  const vehicleCount = Object.keys(vehicles).length;
+
+  if (!vehicleCount) {
+    showMessage("exportMessage", "No vehicle details available to export.", "error");
+    return;
+  }
+
+  const payload = {
+    app: "Parking Manager",
+    type: "vehicle-master",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    totalVehicles: vehicleCount,
+    vehicles: vehicles
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  a.href = url;
+  a.download = `parking_vehicles_backup_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showMessage("exportMessage", "Vehicle details exported successfully.", "success");
+}
+
+function importVehiclesJSON(file) {
+  clearMessage("exportMessage");
+
+  if (!file) {
+    showMessage("exportMessage", "Please select a JSON file.", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    try {
+      const content = event.target.result;
+      const parsed = JSON.parse(content);
+
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("Invalid JSON format.");
+      }
+
+      if (!parsed.vehicles || typeof parsed.vehicles !== "object") {
+        throw new Error("Vehicle data not found in JSON file.");
+      }
+
+      const importedVehicles = parsed.vehicles;
+      const importedKeys = Object.keys(importedVehicles);
+
+      if (!importedKeys.length) {
+        showMessage("exportMessage", "Imported file does not contain any vehicle records.", "error");
+        return;
+      }
+
+      let added = 0;
+      let updated = 0;
+
+      importedKeys.forEach(vehicleNumber => {
+        const normalizedNumber = normalizeVehicleNumber(vehicleNumber);
+        const item = importedVehicles[vehicleNumber];
+
+        if (!normalizedNumber || !item) return;
+
+        const existing = vehicles[normalizedNumber];
+
+        vehicles[normalizedNumber] = {
+          vehicleNumber: normalizedNumber,
+          employeeId: String(item.employeeId || "").trim(),
+          ownerName: String(item.ownerName || item.name || "").trim(),
+          phoneNumber: String(item.phoneNumber || item.phone || "").trim(),
+          vehicleType: String(item.vehicleType || item.type || "").trim(),
+          createdAt: item.createdAt || new Date().toISOString()
+        };
+
+        if (existing) {
+          updated++;
+        } else {
+          added++;
+        }
+      });
+
+      saveAll();
+      updateDashboard();
+
+      if (currentVehicleNumber && vehicles[currentVehicleNumber]) {
+        renderActionCard(currentVehicleNumber);
+      }
+
+      showMessage(
+        "exportMessage",
+        `Vehicle import completed. Added: ${added}, Updated: ${updated}.`,
+        "success"
+      );
+    } catch (error) {
+      showMessage("exportMessage", `Import failed: ${error.message}`, "error");
+    } finally {
+      importVehiclesFile.value = "";
+    }
+  };
+
+  reader.onerror = function() {
+    showMessage("exportMessage", "Unable to read the selected file.", "error");
+    importVehiclesFile.value = "";
+  };
+
+  reader.readAsText(file);
+}
+
     function quickOut(vehicleNumber) {
       currentVehicleNumber = vehicleNumber;
       renderActionCard(vehicleNumber);
@@ -1012,6 +1145,17 @@
     function escapeJs(value) {
       return String(value).replaceAll("\\", "\\\\").replaceAll("'", "\\'");
     }
+
+    exportVehiclesBtn.addEventListener("click", exportVehiclesJSON);
+
+importVehiclesBtn.addEventListener("click", () => {
+  importVehiclesFile.click();
+});
+
+importVehiclesFile.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  importVehiclesJSON(file);
+});
 
     searchBtn.addEventListener("click", handleSearch);
     searchInput.addEventListener("keydown", (e) => {
